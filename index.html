@@ -1,0 +1,2097 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mathe-Kiosk</title>
+  <style>
+    :root{
+      --bg1:#fff2d7; --bg2:#e9f2ff;
+      --paper:#fffdf6;
+      --ink:#1f2430; --muted:#6a6f7a;
+      --border:#1f1f1f;
+
+      --shadow: 0 14px 0 rgba(0,0,0,.08);
+      --shadow2: 0 8px 0 rgba(0,0,0,.07);
+
+      --shelfBg:#2b2f3a; --shelfBg2:#242834;
+      --plank1:#d6d9e0; --plank2:#b7bdc8;
+      --tag:#ffffff;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 600px at 10% 10%, #fff7ea 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, #eaf2ff 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      overflow-x:auto;
+    }
+
+    header{
+      padding:14px 14px 10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+
+    .titleRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background:linear-gradient(135deg, #ffd1e6, #cfe2ff);
+      border:3px solid var(--border);
+      display:grid;place-items:center;
+      font-size:22px;
+      box-shadow:var(--shadow2);
+    }
+    h1{margin:0;font-size:30px;letter-spacing:.3px;}
+
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+    .control{
+      background:var(--paper);
+      border:3px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:8px 10px;
+      display:flex;gap:8px;align-items:center
+    }
+    label{font-size:12px;color:var(--muted)}
+    select{
+      font:inherit;
+      border:2px solid var(--border);
+      border-radius:12px;
+      padding:7px 10px;
+      background:#fff;
+      min-width:170px;
+    }
+
+    main{
+      padding:12px 12px 16px;
+      display:grid;
+      grid-template-columns: minmax(620px, 1.25fr) minmax(560px, 1fr);
+      gap:14px;
+      align-items:start;
+      min-height: calc(100vh - 92px);
+      min-width: 0;
+    }
+    section.panel[aria-label="Regal"]{ align-self:start; }
+
+
+    .panel{
+      background:var(--paper);
+      border:3px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .panelHeader{
+      padding:10px 12px;
+      border-bottom:3px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:
+        repeating-linear-gradient(135deg, rgba(0,0,0,.04) 0 8px, transparent 8px 16px),
+        linear-gradient(180deg, #fff, #fff7f0);
+      min-height: 22px;
+    }
+
+    .right{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      background:transparent;
+      border:none;
+      box-shadow:none;
+      padding:0;
+      height:100%;
+      min-height:0;
+      align-self:stretch;
+    }
+    /* Desktop/Default: rechte Spalte ohne leere Zwischenreihe */
+    .panel[aria-label="Kasse"]{ flex:0 0 auto; }
+    .panel[aria-label="Portemonnaie"]{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+
+    /* Buttons */
+    .miniBtn{
+      background:#fff;
+      border:3px solid var(--border);
+      border-radius:16px;
+      padding:10px 12px;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow: 0 10px 0 rgba(0,0,0,.08);
+      user-select:none;
+      line-height:1;
+      white-space:nowrap;
+    }
+    .miniBtn.pink{background:linear-gradient(180deg, #ff72b6, #ff4fa5);color:#fff}
+    .miniBtn.primary{background:linear-gradient(180deg,#7aa2ff,#5b7cfa);color:#fff}
+    .miniBtn:active{transform:translateY(1px)}
+
+    /* ===========================
+       LINKS: REGAL
+       =========================== */
+    .storeArea{
+      flex:1;
+      background:linear-gradient(180deg,var(--shelfBg),var(--shelfBg2));
+      padding:12px;
+      overflow:hidden;
+    }
+    .shelfUnit{
+      height:100%;
+      border:3px solid var(--border);
+      border-radius:20px;
+      background:linear-gradient(180deg,#3a3f52,#2a2f3b);
+      box-shadow:var(--shadow2);
+      padding:12px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .shelfTitleRow{display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap;flex:0 0 auto;}
+    .sign{
+      background:linear-gradient(180deg,#ffeaa0,#fff);
+      border:3px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow2);
+      padding:6px 10px;
+      font-weight:1000;
+      color:#202020;
+    }
+
+    #shelves{
+      flex:1 1 auto;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      gap:6px;
+      min-height:0;
+    }
+
+    .shelfLevel{
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:2px solid rgba(255,255,255,.08);
+      padding:4px 8px 4px;
+      margin:0;
+      flex:0 0 auto;
+    }
+
+    .itemsRow{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+      align-items:end;
+    }
+
+    .slot{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:5px;
+      user-select:none;
+      cursor:pointer;
+    }
+    .prodPic{
+      width:76px;height:68px;border-radius:16px;
+      border:3px solid var(--border);
+      background:linear-gradient(180deg,#ffffff,#eef6ff);
+      box-shadow:0 10px 0 rgba(0,0,0,.10);
+      display:grid;place-items:center;
+      font-size:30px;
+      transform:rotate(var(--tilt, -1deg));
+      transition:transform .08s ease;
+    }
+    .slot:hover .prodPic{transform:rotate(var(--tilt, -1deg)) translateY(-1px)}
+    .slot:active .prodPic{transform:rotate(var(--tilt, -1deg)) translateY(1px)}
+    .prodName{
+      color:#eef1ff;
+      font-weight:900;
+      font-size:11px;
+      text-align:center;
+      line-height:1.1;
+      width:100%;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      opacity:.98;
+    }
+
+    .plank{
+      height:8px;border-radius:12px;
+      background:linear-gradient(180deg,var(--plank1),var(--plank2));
+      border:3px solid var(--border);
+      box-shadow:0 10px 0 rgba(0,0,0,.10);
+      margin-top:4px;
+      position:relative;
+      z-index:3;
+    }
+
+    .labelsRow{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+      margin-top:-2px;
+      position:relative;
+      z-index:2;
+    }
+    .priceTag{
+      background:var(--tag); color:#111;
+      border:2px solid #111;
+      border-radius:6px;
+      padding:6px 6px 5px;
+      text-align:center;
+      line-height:1.05;
+      box-shadow: 0 6px 0 rgba(0,0,0,.10);
+      min-height:40px;
+      transform: translateY(8px);
+      position:relative;
+    }
+    .priceTag::before{
+      content:"";
+      position:absolute;
+      top:-9px;
+      left:50%;
+      transform:translateX(-50%);
+      width:26px;height:10px;
+      background:#fff;
+      border:2px solid #111;
+      border-bottom:none;
+      border-radius:8px 8px 0 0;
+    }
+    .priceTag .p{font-weight:1000;font-size:12px}
+    .priceTag .u{font-size:10px;color:#555;font-weight:900}
+
+    /* Unteres Fach: Kisten */
+    .cratesRow{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+      align-items:stretch;
+    }
+    .crate{
+      border:3px solid var(--border);
+      border-radius:14px;
+      background:linear-gradient(180deg,#d59545,#c78335);
+      box-shadow:0 9px 0 rgba(0,0,0,.12);
+      padding:8px;
+      position:relative;
+      min-height:118px;
+      overflow:hidden;
+    }
+    .crate::before{
+      content:"";
+      position:absolute;
+      left:10px; right:10px;
+      top:24px;
+      height:54px;
+      border-radius:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(0,0,0,.08));
+      border:2px solid rgba(0,0,0,.28);
+    }
+    .crate::after{
+      content:"";
+      position:absolute;
+      left:0; right:0;
+      top:18px;
+      height:14px;
+      background:linear-gradient(180deg, rgba(0,0,0,.12), rgba(255,255,255,.08));
+      border-top:3px solid var(--border);
+      border-bottom:3px solid rgba(0,0,0,.35);
+      opacity:.85;
+    }
+    .crateTitle{
+      position:absolute;
+      top:6px; left:8px; right:8px;
+      background:#fff;
+      border:3px solid var(--border);
+      border-radius:12px;
+      padding:3px 8px;
+      font-weight:1000;
+      font-size:12px;
+      box-shadow:0 6px 0 rgba(0,0,0,.10);
+      z-index:6;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .crateItems{
+      position:absolute;
+      left:10px; right:10px;
+      top:30px;
+      height:56px;
+      z-index:5;
+      pointer-events:none;
+    }
+    .fruit{
+      position:absolute;
+      width:38px;height:38px;border-radius:14px;
+      border:3px solid var(--border);
+      background:linear-gradient(180deg,#fff,#f7fbff);
+      box-shadow:0 7px 0 rgba(0,0,0,.10);
+      display:grid;place-items:center;
+      font-size:24px;
+      transform: rotate(var(--r, 0deg)) translateY(var(--y, -8px));
+      pointer-events:none;
+    }
+    .crateClick{position:absolute;inset:0;z-index:7;background:transparent;border:none;cursor:pointer;}
+    .crateClick:active{transform:translateY(1px)}
+    .cratePriceTag{
+      position:absolute;
+      left:50%;
+      bottom:8px;
+      transform:translateX(-50%);
+      background:#fff;
+      border:2px solid #111;
+      border-radius:6px;
+      padding:5px 8px 4px;
+      text-align:center;
+      line-height:1.05;
+      min-width:96px;
+      box-shadow: 0 6px 0 rgba(0,0,0,.10);
+      z-index:8;
+      overflow: visible;
+    }
+    .cratePriceTag::before{
+      content:"";
+      position:absolute;
+      top:-14px;
+      left:50%;
+      transform:translateX(-50%) rotate(-6deg);
+      width:40px;height:12px;
+      background:rgba(255,230,120,.22);
+      border:2px solid rgba(0,0,0,.16);
+      border-radius:6px;
+      pointer-events:none;
+    }
+    .cratePriceTag .p{font-weight:1000;font-size:12px}
+    .cratePriceTag .u{font-size:10px;color:#555;font-weight:900}
+
+    /* ===========================
+       RECHTS: KASSE
+       =========================== */
+    .panelHeader h2{margin:0;font-size:16px}
+    .registerBody{padding:8px 10px;display:flex;flex-direction:column;gap:8px;justify-content:flex-start}
+    .cartBox{
+      background:#fff;
+      border:3px solid var(--border);
+      border-radius:18px;
+      box-shadow: 0 10px 0 rgba(0,0,0,.08);
+      overflow:hidden;
+    }
+    .cartHeader{
+      padding:10px 12px;
+      border-bottom:3px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:linear-gradient(180deg,#fff,#f6fbff);
+    }
+    .cartHeader .title{font-weight:1000;font-size:13px;color:#2b2b2b;}
+    .cartHeader .total{font-weight:1000;font-size:14px;color:#000;}
+
+    .cartList{max-height:240px; overflow:auto;}
+
+    /* Warenkorb als Symbol-Grid */
+    .cartIcons{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      padding:12px;
+      align-items:flex-start;
+      justify-content:flex-start;
+    }
+    .cartIconBtn{
+      width:54px;height:54px;
+      border:3px solid var(--border);
+      border-radius:16px;
+      background:linear-gradient(180deg,#fff,#eef6ff);
+      box-shadow:0 8px 0 rgba(0,0,0,.08);
+      font-size:26px;
+      font-weight:1000;
+      cursor:pointer;
+      user-select:none;
+      line-height:1;
+      display:grid;
+      place-items:center;
+    }
+    .cartIconBtn:active{transform:translateY(1px)}
+
+    /* Warenkorb: gleiche Artikel als Stapel */
+    .cartIconBtn{ position:relative; overflow:visible; }
+    .cartIconBtn.stack::before,
+    .cartIconBtn.stack::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border:3px solid var(--border);
+      border-radius:16px;
+      background:linear-gradient(180deg,#fff,#eef6ff);
+      box-shadow:0 8px 0 rgba(0,0,0,.06);
+      z-index:-1;
+      pointer-events:none;
+    }
+    .cartIconBtn.stack::before{ transform: translate(6px, 6px); opacity:.22; }
+    .cartIconBtn.stack::after{  transform: translate(3px, 3px); opacity:.30; }
+
+    .cartQtyBadge{
+      position:absolute;
+      top:-10px; right:-10px;
+      min-width:28px; height:28px;
+      padding:0 6px;
+      border:3px solid var(--border);
+      border-radius:999px;
+      background:#fff;
+      box-shadow:0 8px 0 rgba(0,0,0,.08);
+      display:grid;
+      place-items:center;
+      font-size:12px;
+      font-weight:1000;
+      line-height:1;
+    }
+
+    .line{
+      display:grid;
+      grid-template-columns: 46px 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-bottom:2px dashed rgba(0,0,0,.12);
+    }
+    .line:last-child{border-bottom:none}
+    .lineIcon{
+      width:42px;height:42px;
+      border:3px solid var(--border);
+      border-radius:14px;
+      display:grid;place-items:center;
+      background:linear-gradient(180deg,#fff,#eef6ff);
+      box-shadow:0 8px 0 rgba(0,0,0,.08);
+      font-size:24px;
+    }
+    .lineMain{min-width:0;}
+    .lineName{font-weight:1000;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .lineSub{
+      font-size:12px;color:var(--muted);font-weight:800;margin-top:2px;
+      display:flex;gap:10px;flex-wrap:wrap;
+    }
+    .qtyControls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+    .mini{
+      border:3px solid var(--border);
+      background:#fff;
+      border-radius:12px;
+      padding:6px 8px;
+      font-weight:1000;
+      cursor:pointer;
+      user-select:none;
+      box-shadow:0 8px 0 rgba(0,0,0,.08);
+    }
+    .mini:active{transform:translateY(1px)}
+    .mini.danger{background:linear-gradient(180deg,#ff9a9a,#ff6f6f); color:#fff;}
+    .priceStrong{font-weight:1000}
+
+    .regBtns{display:flex;gap:10px;flex-wrap:wrap}
+
+    .cashMsg{
+      background:#fff;
+      border:3px solid var(--border);
+      border-radius:18px;
+      padding:10px 12px;
+      box-shadow: 0 10px 0 rgba(0,0,0,.08);
+      display:none;
+      font-weight:900;
+      line-height:1.25;
+    }
+    .cashMsg.show{display:block;}
+    .cashMsg.ok{background:linear-gradient(180deg,#eafff3,#ffffff);}
+    .cashMsg.warn{background:linear-gradient(180deg,#fff6df,#ffffff);}
+    .cashMsg.bad{background:linear-gradient(180deg,#ffe4e4,#ffffff);}
+
+    /* ===========================
+       RECHTS: PORTEMONNAIE
+       =========================== */
+    .walletBody{padding:12px;display:grid;gap:10px;overflow:auto}
+    .tray{
+      background:#fff;
+      border:3px solid var(--border);
+      border-radius:18px;
+      padding:10px 12px;
+      box-shadow: 0 10px 0 rgba(0,0,0,.08);
+      position:relative;
+    }
+    .trayHead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+    .trayHead h3{margin:0;font-size:14px;font-weight:1000}
+
+    .sumToggle{
+      font-weight:1000;
+      cursor:pointer;
+      user-select:none;
+      border:2px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      background:#f3fbff;
+      box-shadow: 0 8px 0 rgba(0,0,0,.06);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .trayItems{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding-top:10px;
+      min-height:74px;
+      border-radius:14px;
+      border:2px dashed rgba(0,0,0,.20);
+      background:linear-gradient(180deg, rgba(235,245,255,.7), rgba(255,255,255,.9));
+      padding:10px;
+    }
+    .trayItems.dropHover{
+      outline:3px solid rgba(91,124,250,.55);
+      outline-offset:2px;
+    }
+
+    .pill{
+      border:3px solid var(--border);
+      background:linear-gradient(180deg,#fff,#f3f6ff);
+      border-radius:999px;
+      padding:8px 10px;
+      display:flex;gap:8px;align-items:center;
+      cursor:grab;
+      box-shadow: 0 9px 0 rgba(0,0,0,.06);
+      font-weight:1000;
+      user-select:none;
+      touch-action:none;
+    }
+    .pill.dragging{cursor:grabbing; box-shadow: 0 14px 0 rgba(0,0,0,.10);}
+
+    .trayActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-start;
+      padding-top:10px;
+      align-items:flex-end;
+    }
+
+    .changeBox{
+      display:none;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      background:#fff;
+      border:2px solid rgba(0,0,0,.20);
+      border-radius:14px;
+      padding:10px 10px;
+      box-shadow: 0 8px 0 rgba(0,0,0,.05);
+    }
+    .changeBox.show{display:flex;}
+    .changeBox label{
+      font-size:12px;
+      color:#333;
+      font-weight:1000;
+    }
+    .changeBox input{
+      font:inherit;
+      border:2px solid var(--border);
+      border-radius:12px;
+      padding:8px 10px;
+      min-width:170px;
+      box-shadow: 0 8px 0 rgba(0,0,0,.06);
+    }
+
+    .moneyWrap{position:relative;}
+    .sortToggle{
+      position:absolute;
+      bottom:12px;
+      right:12px;
+      z-index:9999;
+      padding:10px 12px;
+      border-radius:16px;
+    }
+    .sortToggle[disabled]{opacity:.55;cursor:not-allowed}
+
+    .moneyArea{
+      position:relative;
+      border:3px solid var(--border);
+      border-radius:20px;
+      min-height:300px;
+      background:
+        radial-gradient(900px 420px at 20% 0%, #fff6f8 0%, transparent 65%),
+        radial-gradient(900px 420px at 80% 0%, #eef3ff 0%, transparent 65%),
+        linear-gradient(180deg, #ffffff, #fbfbff);
+      box-shadow: inset 0 0 0 3px rgba(0,0,0,.05);
+      overflow:hidden;
+      touch-action:none;
+    }
+    .moneyArea.dropHover{
+      outline:3px solid rgba(91,124,250,.55);
+      outline-offset:2px;
+    }
+
+    .coin, .note{
+      position:absolute;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:1000;
+      user-select:none;
+      cursor:grab;
+      border:3px solid var(--border);
+      box-shadow: 0 12px 0 rgba(0,0,0,.10);
+      transition: transform .08s ease;
+      touch-action:none;
+      overflow:hidden;
+    }
+    .coin{
+      width:66px;height:66px;border-radius:50%;
+      padding-top:1px;
+      font-size:18px;
+      letter-spacing:.2px;
+      color:#1b1b1b;
+      text-shadow: 0 1px 0 rgba(255,255,255,.35);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,0) 40%),
+        radial-gradient(circle at 65% 70%, rgba(0,0,0,.12), rgba(0,0,0,0) 55%),
+        radial-gradient(circle at 50% 50%, #fff7cf 0%, #f1d07b 55%, #d6a64b 100%);
+    }
+    .coin::after{
+      content:"";
+      position:absolute; inset:8px;
+      border-radius:50%;
+      border:2px solid rgba(0,0,0,.18);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.18);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .coin::before{
+      content:"€";
+      position:absolute;
+      bottom:7px; right:10px;
+      font-size:14px;
+      color:rgba(0,0,0,.22);
+      font-weight:1000;
+      transform:rotate(-10deg);
+      pointer-events:none;
+    }
+    .coin[data-v="1"], .coin[data-v="2"], .coin[data-v="5"]{
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(255,255,255,0) 45%),
+        radial-gradient(circle at 60% 70%, rgba(0,0,0,.18), rgba(0,0,0,0) 60%),
+        radial-gradient(circle at 50% 50%, #ffd0c2 0%, #e28b6d 55%, #b55b3b 100%);
+    }
+    .coin[data-v="10"], .coin[data-v="20"], .coin[data-v="50"]{
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,0) 42%),
+        radial-gradient(circle at 62% 72%, rgba(0,0,0,.14), rgba(0,0,0,0) 60%),
+        radial-gradient(circle at 50% 50%, #fff7cf 0%, #f2d07f 55%, #d3a348 100%);
+    }
+    .coin[data-v="100"]{
+      background:
+        radial-gradient(circle at 50% 50%, #f7f7f7 0 34%, #d8b463 34% 66%, #b28a2f 66% 100%),
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.85), rgba(255,255,255,0) 45%);
+    }
+    .coin[data-v="200"]{
+      background:
+        radial-gradient(circle at 50% 50%, #f0d38a 0 34%, #e9eef4 34% 66%, #98a8b7 66% 100%),
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.85), rgba(255,255,255,0) 45%);
+    }
+
+    .note{
+      width:118px;height:70px;border-radius:16px;
+      font-size:22px;
+      letter-spacing:.2px;
+      color:#1a1a1a;
+      text-shadow: 0 1px 0 rgba(255,255,255,.35);
+      background:
+        radial-gradient(circle at 18% 25%, rgba(255,255,255,.75), rgba(255,255,255,0) 45%),
+        linear-gradient(135deg, #d8ffea, #e9fff6);
+    }
+    .note::before{
+      content:"EURO";
+      position:absolute;
+      left:10px; top:10px;
+      font-size:10px;
+      color:rgba(0,0,0,.28);
+      letter-spacing:1.2px;
+      font-weight:1000;
+    }
+    .note::after{
+      content:"€";
+      position:absolute;
+      right:10px; bottom:8px;
+      font-size:18px;
+      color:rgba(0,0,0,.20);
+      font-weight:1000;
+    }
+    .note[data-v="500"]{   background: radial-gradient(circle at 18% 25%, rgba(255,255,255,.75), rgba(255,255,255,0) 45%), linear-gradient(135deg,#d9f2d9,#bfe3bf);}
+    .note[data-v="1000"]{  background: radial-gradient(circle at 18% 25%, rgba(255,255,255,.75), rgba(255,255,255,0) 45%), linear-gradient(135deg,#ffe1da,#ffc1b2);}
+    .note[data-v="2000"]{  background: radial-gradient(circle at 18% 25%, rgba(255,255,255,.75), rgba(255,255,255,0) 45%), linear-gradient(135deg,#d7edff,#b9dcff);}
+    .note[data-v="5000"]{  background: radial-gradient(circle at 18% 25%, rgba(255,255,255,.75), rgba(255,255,255,0) 45%), linear-gradient(135deg,#ead9ff,#d2b8ff);}
+
+    .coin.dragging, .note.dragging{cursor:grabbing; box-shadow: 0 16px 0 rgba(0,0,0,.12); }
+
+    .srOnly{
+      position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+  
+/* =========================
+   Responsive Schulversion PRO
+   - Tablet: alles auf 1 Bildschirm (Regal + Kasse + Portemonnaie)
+   - Handy: untereinander (Scroll erlaubt)
+   ========================= */
+
+main{ min-width: 0 !important; } /* entfernt feste Mindestbreite */
+
+/* TABLET (quer/hoch): alles sichtbar ohne Scrollen */
+@media (max-width: 1100px) and (min-width: 600px){
+  html, body{ height: 100dvh; }
+  body{
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  header{
+    padding: 10px 10px 6px;
+    gap: 10px;
+  }
+  h1{ font-size: 26px; }
+  .controls{ justify-content:flex-start; }
+  select{ min-width: 150px; }
+
+  /* ===== Anordnung wie im Screenshot:
+     links Regal, rechts oben Kasse, rechts unten Portemonnaie ===== */
+  main{
+    height: 100%;
+    padding: 10px;
+    gap: 10px;
+    min-height: 0;
+    grid-template-columns: minmax(560px, 1.25fr) minmax(420px, 1fr);
+    grid-template-rows: 1fr;
+    align-items: stretch;
+  }
+
+  section.panel[aria-label="Regal"]{
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Rechte Spalte: Flex, damit die Kasse nicht die ganze Höhe „streckt“ */
+  .right{
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Kasse: Höhe nur nach Inhalt (endet unter den Buttons) */
+  .panel[aria-label="Kasse"]{
+    flex: 0 0 auto;
+  }
+  /* Portemonnaie bekommt den restlichen Platz */
+  .panel[aria-label="Portemonnaie"]{
+    flex: 1 1 auto;
+    min-height: 0;
+    display:flex;
+    flex-direction:column;
+  }
+
+/* Kasse: kompakt, kein unnötiger Leerraum */
+  .panel[aria-label="Kasse"]{ min-height: 0; }
+  .registerBody{
+    padding: 10px;
+    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .cartHeader{ padding: 8px 10px; }
+  .cartBox{
+    display:flex;
+    flex-direction:column;
+  }
+  /* Warenkorb-Liste darf nicht die Kasse nach unten ziehen */
+  .cartList{
+    overflow: auto;
+    max-height: 130px; /* bei Bedarf anpassen */
+  }
+
+/* Portemonnaie: Tray oben, Geld-Feld füllt den Rest */
+  .panel[aria-label="Portemonnaie"]{ min-height: 0; }
+  .walletBody{
+    padding: 10px;
+    gap: 8px;
+    flex: 1 1 auto;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr; /* tray + money */
+    min-height: 0;
+  }
+  .moneyWrap{
+    min-height: 0;
+    height: 100%;
+  }
+  .moneyArea{
+    min-height: 0;
+    height: 100%;
+  }
+
+  /* Regal kompakter, aber klickbar */
+  .storeArea{ padding: 10px; }
+  .shelfUnit{ padding: 10px; gap: 10px; }
+
+  /* Regalböden dichter zusammen (Lücken weg) */
+  #shelves{
+    justify-content:flex-start;
+    gap: 6px;
+  }
+  .shelfLevel{ padding: 4px 8px 4px; }
+  .itemsRow{ gap: 8px; }
+  .prodPic{ width: 66px; height: 60px; font-size: 26px; }
+  .prodName{ font-size: 10.5px; }
+  .plank{ height: 10px; margin-top: 5px; }
+  .labelsRow{ gap: 8px; }
+  .priceTag{
+    min-height: 36px;
+    padding: 5px 5px 4px;
+    transform: translateY(6px);
+  }
+  .priceTag .p{ font-size: 11.5px; }
+  .priceTag .u{ font-size: 9.5px; }
+
+  .crate{ min-height: 98px; padding: 6px; }
+  .crateTitle{ font-size: 11px; }
+  .cratePriceTag{ min-width: 88px; padding: 4px 7px 3px; }
+  .fruit{ width: 34px; height: 34px; font-size: 22px; }
+
+  /* Geld-Elemente leicht kompakter */
+  .tray{ padding: 9px 10px; }
+  .trayItems{ min-height: 62px; padding: 8px; gap: 8px; }
+  .pill{ padding: 7px 9px; }
+
+  .coin{ width: 56px; height: 56px; font-size: 16px; }
+  .note{ width: 104px; height: 62px; font-size: 18px; }
+
+  .sortToggle{ bottom: 10px; right: 10px; padding: 9px 10px; }
+}
+
+
+
+/* HANDY: untereinander, Scroll erlaubt */
+@media (max-width: 599px){
+  body{ overflow-x:hidden; }
+  header{ align-items:flex-start; }
+  h1{ font-size:24px; }
+  .controls{ justify-content:flex-start; }
+
+  main{
+    grid-template-columns: 1fr !important;
+    min-height: auto;
+  }
+  .right{
+    display: grid;
+    grid-template-rows: auto auto !important;
+    gap: 10px;
+  }
+  .cartList{ max-height: 170px; overflow:auto; }
+  .moneyArea{ min-height: 240px; }
+}
+
+</style>
+</head>
+
+<body>
+<header>
+  <div class="titleRow">
+    <div class="logo" aria-hidden="true">🏪</div>
+    <h1>Kiosk</h1>
+  </div>
+
+  <div class="controls">
+    <div class="miniBtn pink" id="newRound">Neue Runde 🔄</div>
+
+    <div class="control">
+      <label for="grade">Klasse</label>
+      <select id="grade">
+        <option value="2" selected>2. Klasse</option>
+        <option value="3">3. Klasse</option>
+        <option value="4">4. Klasse</option>
+      </select>
+    </div>
+
+    <div class="control">
+      <label for="level">Schwierigkeit</label>
+      <select id="level">
+        <option value="1" selected>Leicht 🙂 (bis 10 €)</option>
+        <option value="2">Mittel 😊 (bis 25 €)</option>
+        <option value="3">Schwer 🤓 (bis 50 €)</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="panel" aria-label="Regal">
+    <div class="panelHeader"></div>
+    <div class="storeArea">
+      <div class="shelfUnit">
+        <div class="shelfTitleRow">
+          <div class="sign">KIOSK-REGAL</div>
+        </div>
+        <div id="shelves"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="right" aria-label="Kasse und Portemonnaie">
+    <div class="panel" aria-label="Kasse">
+      <div class="panelHeader">
+        <div><h2>🧾 Kasse</h2></div>
+      </div>
+
+      <div class="registerBody">
+        <div class="cartBox">
+          <div class="cartHeader">
+            <div class="title">🛒 Warenkorb</div>
+            <div class="total">Summe: <span id="cartTotal">0,00 €</span></div>
+          </div>
+          <div class="cartList" id="cartList"></div>
+        </div>
+
+        <div class="regBtns">
+          <div class="miniBtn primary" id="checkBtn">Prüfen ✅</div>
+          <div class="miniBtn" id="hintBtn">Tipp 💡</div>
+          <div class="miniBtn" id="clearCartBtn">Warenkorb leeren 🧺</div>
+        </div>
+
+        <div class="cashMsg" id="cashMsg"></div>
+      </div>
+    </div>
+
+    <div class="panel" aria-label="Portemonnaie">
+      <div class="panelHeader">
+        <div><h2>👛 Portemonnaie</h2></div>
+      </div>
+
+      <div class="walletBody">
+        <div class="tray">
+          <div class="trayHead">
+            <h3>🧺 Ablage (zum Bezahlen)</h3>
+            <div class="sumToggle" id="traySumToggle" title="Klicken: Summe anzeigen / ausblenden">
+              <span id="traySumLabel">Summe anzeigen</span>
+              <span id="traySumValue" class="srOnly">0,00 €</span>
+            </div>
+          </div>
+
+          <div class="trayItems" id="tray" aria-label="Ablage – hier Geld ablegen (ziehen & zurück schieben)"></div>
+
+          <div class="trayActions">
+            <div class="miniBtn" id="resetPay">Zahlung leeren 🗑️</div>
+
+            <div class="changeBox" id="changeBox" aria-label="Vermutetes Rückgeld">
+              <label for="changeGuess">Rückgeld:</label>
+              <input id="changeGuess" type="text" inputmode="decimal" placeholder="z.B. 1,20" />
+            </div>
+          </div>
+        </div>
+
+        <div class="moneyWrap" aria-label="Geld-Fach">
+          <button class="miniBtn primary sortToggle" id="sortToggleBtn" type="button">Sortieren 🧩</button>
+          <div class="moneyArea" id="moneyArea" aria-label="Geld im Portemonnaie (ziehen & schieben)"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const euro = c => (c/100).toFixed(2).replace('.', ',') + ' €';
+  const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+  const randInt=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+  const tilts=[-3,-2,-1,1,2,3];
+
+  function labelMoney(c){
+    if(c<100) return `${c}c`;
+    if(c%100===0) return `${c/100}€`;
+    return euro(c);
+  }
+
+  function parseEuroToCents(str){
+    if(!str) return null;
+    const cleaned = String(str)
+      .trim()
+      .replace(/\s/g,'')
+      .replace('€','')
+      .replace(',', '.')
+      .replace(/[^0-9.]/g,'');
+    if(!cleaned) return null;
+    const n = Number.parseFloat(cleaned);
+    if(Number.isNaN(n)) return null;
+    return Math.round(n * 100);
+  }
+
+  const LEVEL_CAP = { 1:1000, 2:2500, 3:5000 };
+  const capTotal = (level)=>LEVEL_CAP[level];
+
+  
+  const walletBudget = (grade, level)=>{
+    // Leicht: 10€
+    if(level === 1) return 1000;
+
+    // Mittel: maximal 30€ (für alle Klassen)
+    if(level === 2) return 3000;
+
+    // Schwer: 55€
+    if(level === 3) return 5500;
+
+    return 3000;
+  };
+
+
+  function roundPriceForGrade(baseCents, grade){
+    if(grade === 2){
+      const euros = Math.max(1, Math.round(baseCents/100));
+      return euros * 100;
+    }
+    if(grade === 3){
+      return Math.round(baseCents/10) * 10;
+    }
+    return baseCents;
+  }
+
+  const exactRequired = (grade)=> grade !== 4;
+
+  function denomsForGrade(grade){
+    if(grade === 2) return [100,200,500,1000];
+    if(grade === 3) return [10,20,50,100,200,500,1000,2000];
+    return [1,2,5,10,20,50,100,200,500,1000,2000,5000];
+  }
+
+  function buildHeavyWallet55(){
+    return [
+      2000, 1000, 500,
+      200,200,200,200,200,200,
+      100,100,100,100,
+      50,50,50,50,
+      20,20,20,20,20,
+      10,10,10,10,10,10,10,10,10,10
+    ];
+  }
+
+  function buildWalletValues(grade, level){
+    // ===== Klasse 3 – vollständige Münzausstattung =====
+    // Enthält immer: 1c,2c,5c,10c,20c,50c,1€,2€,5€
+    const baseCoins = [1,2,5,10,20,50,100,200,500]; // 8,88€
+
+    // --- LEICHT (10€) ---
+    if(grade === 3 && level === 1){
+      const variants = [
+        [...baseCoins, 100,10,2],                  // 10€ exakt
+        [...baseCoins, 100,5,5,2],                  // andere Cent-Kombi
+      ];
+      return variants[Math.floor(Math.random()*variants.length)];
+    }
+
+    // --- MITTEL (30€) ---
+    if(grade === 3 && level === 2){
+      const variants = [
+        [...baseCoins, 2000,100,10,2],              // 20€-Schein Variante
+        [...baseCoins, 1000,1000,100,10,2],         // 2x10€
+        [...baseCoins, 2000,500,500,100,10,2],      // 20€ + 2x5€
+      ];
+      return variants[Math.floor(Math.random()*variants.length)];
+    }
+
+    // --- SCHWER (55€) ---
+    if(grade === 3 && level === 3){
+      const variants = [
+        [...baseCoins, 2000,2000,500,100,10,2],     // 2x20€ + 5€
+        [...baseCoins, 2000,1000,1000,500,100,10,2],// 20€ + 2x10€
+        [...baseCoins, 1000,1000,1000,1000,1000,500,100,10,2], // viele 10€
+      ];
+      return variants[Math.floor(Math.random()*variants.length)];
+    }
+
+    
+
+    
+
+    // Klasse 4 - Leicht: 10€ mit zufälligen Varianten (nur diese Ergänzung)
+    if(grade === 4 && level === 1){
+      const variants = [
+        [1000],                                        // 10€ Schein
+        [500,200,200,100],                             // 5€ + 2€ + 2€ + 1€
+        [500,100,100,100,100,50,20,20,5,2,2,1],        // mit 1c/2c/5c
+        [200,200,200,200,200],                         // 5x 2€
+        [200,200,200,100,100,100,100,5,2,1],           // 1c/2c/5c enthalten
+      ];
+      return variants[Math.floor(Math.random()*variants.length)];
+    }
+
+    
+    if(grade === 4 && level === 3){  // Schwer = 55€
+      const variants = [
+        [5000,500],                                  // 50€ + 5€
+        [2000,2000,1000,500,200,200,100],             // Mischung mit 1€ & 2€
+        [1000,1000,1000,1000,1000,500,200,100,50],    // viele 10er + Münzen
+        [5000,200,200,100,50,20,20,10]                 // 50€ + € & Centmünzen
+      ];
+      return variants[Math.floor(Math.random()*variants.length)];
+    }
+    if(grade === 4 && level === 3){
+      const variants = [
+        [5000,500],                // 50€ + 5€
+        [2000,2000,1000,500,500],  // 20+20+10+5+5
+        [1000,1000,1000,1000,1000,500,500], // viele 10er + 5er
+        [5000,200,200,100],        // 50€ + 2€ + 2€ + 1€
+      ];
+      const choice = variants[Math.floor(Math.random()*variants.length)];
+      return choice;
+    }
+
+    // 2. Klasse: feste, übersichtliche Portemonnaies (exakte Gesamtsumme)
+    if(grade === 2 && level === 2){
+      // 30,00 €  = 10€ + 10€ + 5€ + 5€
+      return [1000,1000,500,200,200,100];
+    }
+    if(grade === 2 && level === 3){
+      // 55,00 €  = 10€ + 10€ + 10€ + 10€ + 5€ + 5€ + 5€
+      return [1000,1000,1000,1000,500,200,200,100,100,50,50,50,50,50,50,50,50];
+    }
+
+    const budget = walletBudget(grade, level);
+
+    if(grade !== 2 && level === 3){
+      return buildHeavyWallet55();
+    }
+
+    const denoms = denomsForGrade(grade);
+    const coinLike = denoms.filter(d => d <= 200);
+    const noteLike = denoms.filter(d => d > 200);
+
+    const values = [];
+    let sum = 0;
+
+    if(grade !== 2 && noteLike.includes(1000) && sum + 1000 <= budget){
+      values.push(1000); sum += 1000;
+    }
+
+    const targetCoins = grade === 2 ? 12 : 26;
+    const targetNotes = grade === 2 ? 1 : 3;
+
+    for(let i=0;i<targetCoins;i++){
+      const d = coinLike[Math.floor(Math.random()*coinLike.length)];
+      if(sum + d > budget) continue;
+      values.push(d); sum += d;
+      if(grade===2 && values.length>=14) break;
+      if(sum > budget*0.85 && grade!==2) break;
+    }
+
+    for(let i=0;i<targetNotes;i++){
+      if(noteLike.length===0) break;
+      const d = noteLike[Math.floor(Math.random()*noteLike.length)];
+      if(sum + d > budget) continue;
+      values.push(d); sum += d;
+      if(sum > budget*0.95) break;
+    }
+
+    let safety = 180;
+    while(safety-- > 0){
+      const d = coinLike[Math.floor(Math.random()*coinLike.length)];
+      if(sum + d > budget) break;
+      if(grade===2 && values.length>=14) break;
+      values.push(d); sum += d;
+      if(sum > budget*0.99) break;
+    }
+
+    if(values.length===0) values.push(grade===2 ? 100 : 10);
+    return values;
+  }
+
+  const ITEMS_BASE = {
+    sweets: [
+      {id:"gummi",  emoji:"🍬", name:"Gummibärchen",    unit:"/Pack",  base: 129},
+      {id:"schoko", emoji:"🍫", name:"Schokolade",      unit:"/Tafel", base: 189},
+      {id:"chips",  emoji:"🥔", name:"Chips",           unit:"/Tüte",  base: 169},
+      {id:"mag",    emoji:"📰", name:"Kinder-Magazin",  unit:"/Heft",  base: 500},
+    ],
+    drinks: [
+      {id:"wasser", emoji:"💧", name:"Wasser",          unit:"/Fl.",   base:  79},
+      {id:"saft",   emoji:"🧃", name:"Saft",            unit:"/Fl.",   base: 129},
+      {id:"milch",  emoji:"🥛", name:"Milch",           unit:"/Pack",  base: 109},
+      {id:"jogh",   emoji:"🍶", name:"Joghurt",         unit:"/Becher",base:  69},
+    ],
+    other: [
+      {id:"fussball",emoji:"⚽", name:"Fußball",        unit:"/Stk",   base:1499},
+      {id:"volley",  emoji:"🏐", name:"Volleyball",     unit:"/Stk",   base:1699},
+      {id:"jojo",    emoji:"🪀", name:"Jo-Jo",          unit:"/Stk",   base: 299},
+      {id:"radier",  emoji:"🧽", name:"Radiergummi",    unit:"/Stk",   base:  79},
+    ],
+    crates: [
+      {id:"apfel",      emoji:"🍎", name:"Äpfel",        unit:"/kg",     base:249, pile:["🍎","🍎","🍎","🍎","🍎"]},
+      {id:"gurke",      emoji:"🥒", name:"Gurken",       unit:"/Stk",    base: 89, pile:["🥒","🥒","🥒","🥒","🥒","🥒","🥒"]},
+      {id:"kartoffel",  emoji:"🥔", name:"Kartoffeln",   unit:"/Sack",   base:399, pile:["🥔","🥔"]},
+      {id:"banane",     emoji:"🍌", name:"Bananen",      unit:"/Staude", base:179, pile:["🍌","🍌"]},
+    ]
+  };
+
+  const state = {
+    grade: 2,
+    level: 1,
+    cart: new Map(),
+    wallet: [],
+    tray: [],
+    layout: "scatter",
+    showTraySum: false,
+    cashMsgOpen: false
+  };
+  let nextId=1;
+  const newId = () => String(nextId++);
+
+  const shelvesEl = document.getElementById("shelves");
+  const cartListEl = document.getElementById("cartList");
+  const cartTotalEl = document.getElementById("cartTotal");
+
+  const trayEl = document.getElementById("tray");
+  const traySumToggle = document.getElementById("traySumToggle");
+  const traySumLabel = document.getElementById("traySumLabel");
+  const traySumValue = document.getElementById("traySumValue");
+
+  const moneyArea = document.getElementById("moneyArea");
+  const sortToggleBtn = document.getElementById("sortToggleBtn");
+
+  const gradeSel = document.getElementById("grade");
+  const levelSel = document.getElementById("level");
+
+  const newRoundBtn = document.getElementById("newRound");
+  const resetPayBtn = document.getElementById("resetPay");
+
+  const checkBtn = document.getElementById("checkBtn");
+  const hintBtn  = document.getElementById("hintBtn");
+  const clearCartBtn = document.getElementById("clearCartBtn");
+
+  const cashMsg = document.getElementById("cashMsg");
+
+  const changeBox = document.getElementById("changeBox");
+  const changeGuess = document.getElementById("changeGuess");
+
+  function allItemsForGrade(){
+    const g = state.grade;
+    const build = (x)=>({ ...x, priceCents: roundPriceForGrade(x.base, g) });
+    const sweets = ITEMS_BASE.sweets.map(build);
+    const drinks = ITEMS_BASE.drinks.map(build);
+    const other  = ITEMS_BASE.other.map(build);
+    const crates = ITEMS_BASE.crates.map(build);
+    const flat = [...sweets, ...drinks, ...other, ...crates];
+    return { sweets, drinks, other, crates, flat };
+  }
+  const getItem = (id)=> allItemsForGrade().flat.find(x=>x.id===id);
+
+  function cartTotal(){
+    const items = allItemsForGrade().flat;
+    let sum=0;
+    for(const [id, qty] of state.cart.entries()){
+      const it = items.find(x=>x.id===id);
+      if(it) sum += it.priceCents * qty;
+    }
+    return sum;
+  }
+  const sumTray = ()=> state.tray.reduce((s,m)=>s+m.value,0);
+
+  function showCashMessage(html, kind="warn"){
+    cashMsg.className = "cashMsg show " + kind;
+    cashMsg.innerHTML = html;
+    state.cashMsgOpen = true;
+  }
+  function toggleCashMessage(html, kind="warn"){
+    if(state.cashMsgOpen){
+      cashMsg.className = "cashMsg";
+      cashMsg.innerHTML = "";
+      state.cashMsgOpen = false;
+    } else {
+      showCashMessage(html, kind);
+    }
+  }
+
+  function addToCart(id){
+    const it = getItem(id);
+    if(!it) return;
+
+    const newTotal = cartTotal() + it.priceCents;
+    if(newTotal > capTotal(state.level)){
+      showCashMessage(`⚠️ Das wäre zu viel für diese Stufe.<br>Maximal: <strong>${euro(capTotal(state.level))}</strong>.`, "warn");
+      return;
+    }
+
+    const qty = state.cart.get(id) || 0;
+    state.cart.set(id, qty+1);
+    renderAll();
+  }
+  function decFromCart(id){
+    const qty = state.cart.get(id) || 0;
+    if(qty<=1) state.cart.delete(id);
+    else state.cart.set(id, qty-1);
+    renderAll();
+  }
+  function removeFromCart(id){
+    state.cart.delete(id);
+    renderAll();
+  }
+  function clearCart(){
+    state.cart.clear();
+    renderAll();
+  }
+
+  function buildWallet(){
+    const values = buildWalletValues(state.grade, state.level);
+    // Start-Layout:
+    // - 2. Klasse leicht: sortiert
+    // - 2. Klasse mittel: etwas durcheinander
+    // - 2. Klasse schwer: durcheinander (mit zusätzlichen 50ct)
+    // - 3. & 4. Klasse: immer zuerst unsortiert
+    const startSorted = (state.grade === 2 && state.level === 1);
+    state.layout = startSorted ? "sort" : "scatter";
+
+    state.wallet = values.map(v=>{
+      const type = (v <= 200) ? "coin" : "note";
+      return {
+        id:newId(),
+        value:v,
+        type,
+        x:randInt(12,280),
+        y:randInt(12,210),
+        rot:randInt(-18,18),
+        z: 1
+      };
+    });
+    state.tray = [];
+
+    // Apply initial layout after the DOM has measured the wallet area
+    requestAnimationFrame(()=>{
+      if(state.layout === "sort") applySortedStackLayout();
+      else applyScatterLayout();
+      renderWallet();
+    });
+  }
+
+  function moveWalletToTray(id){
+    if(cartTotal()===0){
+      showCashMessage("🛒 Erst Produkte in den Warenkorb legen 🙂", "warn");
+      return;
+    }
+    const i = state.wallet.findIndex(m=>m.id===id);
+    if(i<0) return;
+    state.tray.push(state.wallet.splice(i,1)[0]);
+    renderTray(); renderWallet();
+  }
+
+  function moveTrayToWallet(id){
+    const i = state.tray.findIndex(m=>m.id===id);
+    if(i<0) return;
+    const m = state.tray.splice(i,1)[0];
+    m.rot = (state.layout==="scatter") ? randInt(-18,18) : 0;
+    m.x = randInt(12,280);
+    m.y = randInt(12,210);
+    m.z = 1;
+    state.wallet.push(m);
+    if(state.layout === "sort") applySortedStackLayout();
+    if(state.layout === "scatter") applyScatterLayout();
+    renderTray(); renderWallet();
+  }
+
+  function clearPayment(){
+    const back = [...state.tray];
+    state.tray = [];
+    for(const m of back){
+      m.rot = (state.layout==="scatter") ? randInt(-18,18) : 0;
+      m.x = randInt(12,280);
+      m.y = randInt(12,210);
+      m.z = 1;
+      state.wallet.push(m);
+    }
+    if(state.layout === "sort") applySortedStackLayout();
+    if(state.layout === "scatter") applyScatterLayout();
+  }
+
+  function renderShelfLevel(items4){
+    const level = document.createElement("div");
+    level.className = "shelfLevel";
+
+    const row = document.createElement("div");
+    row.className = "itemsRow";
+
+    const labels = document.createElement("div");
+    labels.className = "labelsRow";
+
+    const padded = items4.slice(0,4);
+    while(padded.length<4) padded.push(null);
+
+    padded.forEach((it, idx)=>{
+      const slot = document.createElement("div");
+      slot.className = "slot";
+
+      if(it){
+        slot.innerHTML = `
+          <div class="prodPic" style="--tilt:${tilts[idx%tilts.length]}deg">${it.emoji}</div>
+          <div class="prodName" title="${it.name}">${it.name}</div>
+        `;
+        slot.addEventListener("click", ()=>addToCart(it.id));
+
+        const tag = document.createElement("div");
+        tag.className = "priceTag";
+        tag.innerHTML = `<div class="p">${euro(it.priceCents)}</div><div class="u">${it.unit}</div>`;
+        labels.appendChild(tag);
+      } else {
+        slot.innerHTML = `<div class="prodPic" style="opacity:.22; transform:none;">⬜</div><div class="prodName" style="opacity:.30;">&nbsp;</div>`;
+        const tag = document.createElement("div");
+        tag.className = "priceTag";
+        tag.style.opacity = .22;
+        tag.innerHTML = `<div class="p">–</div><div class="u"> </div>`;
+        labels.appendChild(tag);
+      }
+      row.appendChild(slot);
+    });
+
+    const plank = document.createElement("div");
+    plank.className = "plank";
+
+    level.appendChild(row);
+    level.appendChild(plank);
+    level.appendChild(labels);
+    return level;
+  }
+
+  function renderCratesLevel(crates){
+    const level = document.createElement("div");
+    level.className = "shelfLevel";
+
+    const row = document.createElement("div");
+    row.className = "cratesRow";
+
+    function placePile(pile){
+      const spots = [
+        {x:  4, y:-12, r:-10},
+        {x: 32, y:-18, r:  8},
+        {x: 60, y:-10, r:-6},
+        {x: 18, y: -4, r: 10},
+        {x: 46, y: -2, r:-8},
+        {x: 74, y: -6, r:  6},
+        {x:  8, y: -2, r:  5},
+      ];
+      return pile.map((emoji, i)=>{
+        const s = spots[i % spots.length];
+        return `<div class="fruit" style="left:${s.x}px; top:${18}px; --y:${s.y}px; --r:${s.r}deg">${emoji}</div>`;
+      }).join("");
+    }
+
+    crates.forEach((it)=>{
+      const c = document.createElement("div");
+      c.className = "crate";
+      c.innerHTML = `
+        <div class="crateTitle" title="${it.name}">${it.name}</div>
+        <div class="crateItems">${placePile(it.pile || [it.emoji])}</div>
+        <button class="crateClick" aria-label="${it.name} kaufen"></button>
+        <div class="cratePriceTag"><div class="p">${euro(it.priceCents)}</div><div class="u">${it.unit}</div></div>
+      `;
+      c.querySelector(".crateClick").addEventListener("click", ()=>addToCart(it.id));
+      row.appendChild(c);
+    });
+
+    level.appendChild(row);
+    return level;
+  }
+
+  function renderShelves(){
+    shelvesEl.innerHTML = "";
+    const { sweets, drinks, other, crates } = allItemsForGrade();
+    shelvesEl.appendChild(renderShelfLevel(sweets));
+    shelvesEl.appendChild(renderShelfLevel(drinks));
+    shelvesEl.appendChild(renderShelfLevel(other));
+    shelvesEl.appendChild(renderCratesLevel(crates));
+  }
+
+  
+function renderCart(){
+    cartListEl.innerHTML = "";
+    const total = cartTotal();
+    cartTotalEl.textContent = euro(total);
+
+    if(state.cart.size===0){
+      const empty = document.createElement("div");
+      empty.style.cssText="padding:14px 12px;color:#666;font-weight:900;";
+      empty.textContent = "Warenkorb ist leer. Tippe links Produkte an 🙂";
+      cartListEl.appendChild(empty);
+      return;
+    }
+
+    // Warenkorb als Symbol-Grid (gleiche Artikel werden zu einem Stapel zusammengefasst).
+    // Tippen auf einen Stapel: ein Stück wieder zurück (−1).
+    const wrap = document.createElement("div");
+    wrap.className = "cartIcons";
+
+    // Reihenfolge beibehalten (Map-Einfügereihenfolge)
+    for(const [id, qty] of state.cart.entries()){
+      const it = getItem(id);
+      if(!it) continue;
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cartIconBtn" + (qty > 1 ? " stack" : "");
+      btn.textContent = it.emoji;
+      btn.title = (qty > 1)
+        ? `Antippen: 1× zurück ins Regal legen (im Warenkorb: ${qty}×)`
+        : "Antippen: zurück ins Regal legen";
+      btn.addEventListener("click", ()=>decFromCart(id));
+
+      if(qty > 1){
+        const badge = document.createElement("div");
+        badge.className = "cartQtyBadge";
+        badge.textContent = String(qty);
+        btn.appendChild(badge);
+      }
+
+      wrap.appendChild(btn);
+    }
+
+    cartListEl.appendChild(wrap);
+  }
+
+
+
+    function renderTraySum(){
+    const s = sumTray();
+    traySumValue.textContent = euro(s);
+    if(state.showTraySum){
+      traySumLabel.textContent = "Summe:";
+      traySumValue.classList.remove("srOnly");
+    } else {
+      traySumLabel.textContent = "Summe anzeigen";
+      traySumValue.classList.add("srOnly");
+    }
+  }
+
+  let drag = null;
+  let zCounter = 1000;
+  const bringToFront = (m)=> (m.z = ++zCounter);
+
+  function rectContainsPoint(rect, x, y){
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }
+  function getDropTarget(clientX, clientY){
+    const trayRect = trayEl.getBoundingClientRect();
+    const walletRect = moneyArea.getBoundingClientRect();
+    if(rectContainsPoint(trayRect, clientX, clientY)) return "tray";
+    if(rectContainsPoint(walletRect, clientX, clientY)) return "wallet";
+    return null;
+  }
+  function updateDropHover(clientX, clientY){
+    const target = getDropTarget(clientX, clientY);
+    if(target === "tray"){
+      trayEl.classList.add("dropHover");
+      moneyArea.classList.remove("dropHover");
+    } else if(target === "wallet"){
+      moneyArea.classList.add("dropHover");
+      trayEl.classList.remove("dropHover");
+    } else {
+      clearDropHover();
+    }
+  }
+  function clearDropHover(){
+    trayEl.classList.remove("dropHover");
+    moneyArea.classList.remove("dropHover");
+  }
+
+  function renderTray(){
+    trayEl.innerHTML = "";
+    for(const m of state.tray){
+      const pill = document.createElement("div");
+      pill.className = "pill";
+      pill.textContent = labelMoney(m.value);
+      pill.dataset.id = m.id;
+
+      pill.addEventListener("pointerdown", (ev)=>{
+        ev.preventDefault();
+        pill.setPointerCapture(ev.pointerId);
+        pill.classList.add("dragging");
+        drag = { source:"tray", id:m.id, pointerId:ev.pointerId, moved:false, ptrX:ev.clientX, ptrY:ev.clientY };
+      });
+
+      pill.addEventListener("pointermove", (ev)=>{
+        if(!drag || drag.id !== m.id || drag.source !== "tray") return;
+        const dx = ev.clientX - drag.ptrX;
+        const dy = ev.clientY - drag.ptrY;
+        if(Math.abs(dx)+Math.abs(dy)>6) drag.moved = true;
+        updateDropHover(ev.clientX, ev.clientY);
+      });
+
+      pill.addEventListener("pointerup", (ev)=>{
+        if(!drag || drag.id !== m.id || drag.source !== "tray") return;
+        pill.classList.remove("dragging");
+        const drop = getDropTarget(ev.clientX, ev.clientY);
+        const wasMoved = drag.moved;
+        drag = null;
+        clearDropHover();
+
+        if(drop === "wallet" || !wasMoved){
+          moveTrayToWallet(m.id);
+          renderTraySum();
+        }
+      });
+
+      pill.addEventListener("pointercancel", ()=>{
+        pill.classList.remove("dragging");
+        drag = null;
+        clearDropHover();
+      });
+
+      trayEl.appendChild(pill);
+    }
+    renderTraySum();
+  }
+
+  function applyScatterLayout(){
+    state.layout = "scatter";
+    const rect = moneyArea.getBoundingClientRect();
+    const W = Math.max(320, Math.floor(rect.width));
+    const H = Math.max(260, Math.floor(rect.height));
+
+    // "Haufen"-Layout wie im Bild: alles liegt als Stapel/Heap in der Mitte,
+    // nicht über die ganze Fläche verteilt.
+    const cx = Math.floor(W * 0.50);
+    const cy = Math.floor(H * 0.56);
+
+    // Erst Scheine "unter" den Münzen platzieren
+    const notes = state.wallet.filter(m => m.type === "note");
+    const coins = state.wallet.filter(m => m.type === "coin");
+
+    const maxNoteX = W - 128;
+    const maxNoteY = H - 80;
+    const maxCoinX = W - 72;
+    const maxCoinY = H - 72;
+
+    // Hilfsfunktion: pseudo-gauss (0..1) mit stärkerem Zentrum
+    const g = ()=> (Math.random() + Math.random() + Math.random()) / 3;
+
+    notes.forEach((m, i)=>{
+      const dx = (g() - 0.5) * (W * 0.28);
+      const dy = (g() - 0.5) * (H * 0.20);
+      m.x = clamp(cx + dx - 60, 6, maxNoteX);
+      m.y = clamp(cy + dy - 40, 6, maxNoteY);
+      m.rot = randInt(-10, 10);
+      m.z = 40 + i; // hinten
+    });
+
+    coins.forEach((m, i)=>{
+      const dx = (g() - 0.5) * (W * 0.32);
+      const dy = (g() - 0.5) * (H * 0.24);
+      m.x = clamp(cx + dx - 28, 6, maxCoinX);
+      m.y = clamp(cy + dy - 28, 6, maxCoinY);
+      m.rot = randInt(-18, 18);
+      m.z = 200 + i; // vorne
+    });
+  }
+
+
+  
+function applySortedStackLayout(){
+    const rect = moneyArea.getBoundingClientRect();
+    const W = Math.max(320, Math.floor(rect.width));
+    const H = Math.max(260, Math.floor(rect.height));
+
+    // 2. Klasse:
+    // - leicht & mittel: alles nebeneinander (übersichtlich)
+    // - schwer: wie 3./4. Klasse in Stapeln nach Wert
+    if(state.grade === 2 && state.level !== 3){
+      const sorted = [...state.wallet].sort((a,b)=>a.value-b.value);
+      const spacing = 90;
+      let x = 20;
+      let y = 40;
+      sorted.forEach((m,i)=>{
+        m.x = x;
+        m.y = y;
+        m.rot = 0;
+        m.z = 10 + i;
+        x += spacing;
+        if(x > W - 120){
+          x = 20;
+          y += 100;
+        }
+      });
+      state.layout = "sort";
+      return;
+    }
+
+    // 3. & 4. Klasse wie bisher (gestapelt)
+    const groups = new Map();
+    for(const m of state.wallet){
+      if(!groups.has(m.value)) groups.set(m.value, []);
+      groups.get(m.value).push(m);
+    }
+    const denoms = Array.from(groups.keys()).sort((a,b)=>a-b);
+
+    const colW = 126, rowH = 94, padX = 14, padY = 14;
+    const colsPerRow = Math.max(1, Math.floor((W - padX) / colW));
+
+    let colIndex = 0;
+    const dx = 4, dy = 4;
+
+    denoms.forEach((val)=>{
+      const col = colIndex % colsPerRow;
+      const row = Math.floor(colIndex / colsPerRow);
+
+      const baseX = padX + col * colW;
+      const baseY = padY + row * rowH;
+
+      const safeX = Math.max(8, Math.min(baseX, W - 140));
+      const safeY = Math.max(8, Math.min(baseY, H - 95));
+
+      const pile = groups.get(val).slice().sort((a,b)=>a.id.localeCompare(b.id));
+      pile.forEach((m, i)=>{
+        m.x = safeX + (i * dx);
+        m.y = safeY + (i * dy);
+        m.rot = 0;
+        m.z = 10 + i;
+      });
+
+      colIndex++;
+    });
+
+    state.layout = "sort";
+}
+
+
+  function renderWallet(){
+    moneyArea.innerHTML = "";
+    const rect = moneyArea.getBoundingClientRect();
+    const W = Math.max(320, Math.floor(rect.width));
+    const H = Math.max(260, Math.floor(rect.height));
+
+    for(const m of state.wallet){
+      const maxX = W - (m.type==="coin" ? 72 : 128);
+      const maxY = H - (m.type==="coin" ? 72 : 80);
+      m.x = clamp(m.x, 6, maxX);
+      m.y = clamp(m.y, 6, maxY);
+      if(typeof m.z !== "number") m.z = 1;
+    }
+
+    for(const m of state.wallet){
+      const el = document.createElement("div");
+      el.className = (m.type==="coin") ? "coin" : "note";
+      el.dataset.id = m.id;
+      el.dataset.v  = String(m.value);
+
+      el.style.left = m.x + "px";
+      el.style.top  = m.y + "px";
+      el.style.transform = `rotate(${m.rot}deg)`;
+      el.style.zIndex = String(m.z);
+      el.textContent = labelMoney(m.value);
+
+      el.addEventListener("pointerdown", (ev)=>{
+        ev.preventDefault();
+        el.setPointerCapture(ev.pointerId);
+
+        const mm = state.wallet.find(x=>x.id===m.id);
+        if(!mm) return;
+
+        bringToFront(mm);
+        el.classList.add("dragging");
+
+        drag = {
+          source: "wallet",
+          id: mm.id,
+          pointerId: ev.pointerId,
+          startX: mm.x,
+          startY: mm.y,
+          ptrX: ev.clientX,
+          ptrY: ev.clientY,
+          moved: false
+        };
+        el.style.zIndex = String(mm.z);
+      });
+
+      el.addEventListener("pointermove", (ev)=>{
+        if(!drag || drag.id !== m.id || drag.source !== "wallet") return;
+        const mm = state.wallet.find(x=>x.id===drag.id);
+        if(!mm) return;
+
+        const dx = ev.clientX - drag.ptrX;
+        const dy = ev.clientY - drag.ptrY;
+        if(Math.abs(dx) + Math.abs(dy) > 6) drag.moved = true;
+
+        mm.x = drag.startX + dx;
+        mm.y = drag.startY + dy;
+
+        const maxX = W - (mm.type==="coin" ? 72 : 128);
+        const maxY = H - (mm.type==="coin" ? 72 : 80);
+        mm.x = clamp(mm.x, 6, maxX);
+        mm.y = clamp(mm.y, 6, maxY);
+
+        el.style.left = mm.x + "px";
+        el.style.top  = mm.y + "px";
+
+        updateDropHover(ev.clientX, ev.clientY);
+      });
+
+      el.addEventListener("pointerup", (ev)=>{
+        if(!drag || drag.id !== m.id || drag.source !== "wallet") return;
+
+        const wasMoved = drag.moved;
+        drag = null;
+        el.classList.remove("dragging");
+
+        const drop = getDropTarget(ev.clientX, ev.clientY);
+        clearDropHover();
+
+        if(state.grade===2 && wasMoved){
+          state.layout = "manual";
+        }
+
+        if(drop === "tray"){
+          moveWalletToTray(m.id);
+          renderTraySum();
+          return;
+        }
+
+        if(!wasMoved){
+          moveWalletToTray(m.id);
+          renderTraySum();
+          return;
+        }
+      });
+
+      el.addEventListener("pointercancel", ()=>{
+        el.classList.remove("dragging");
+        drag = null;
+        clearDropHover();
+      });
+
+      moneyArea.appendChild(el);
+    }
+  }
+
+  function updateWalletModeUI(){
+    // Sortier-Logik:
+    // - 3. & 4. Klasse: immer zuerst durcheinander, Sortieren nur per Button
+    // - 2. Klasse: leicht startet sortiert, mittel & schwer starten durcheinander (Sortieren per Button)
+    sortToggleBtn.disabled = false;
+
+    if(state.grade === 2){
+      if(state.level === 1){
+        sortToggleBtn.title = "2. Klasse leicht: startet sortiert – klicken zum neu Sortieren 🙂";
+      } else if(state.level === 3){
+        sortToggleBtn.title = "2. Klasse schwer: startet durcheinander – klicken zum Sortieren 🙂";
+      } else {
+        sortToggleBtn.title = "2. Klasse mittel: startet durcheinander – klicken zum Sortieren 🙂";
+      }
+    } else {
+      sortToggleBtn.title = "Start: durcheinander – klicken: sortieren 🙂";
+    }
+
+    if(state.grade === 4){
+      changeBox.classList.add("show");
+    } else {
+      changeBox.classList.remove("show");
+      changeGuess.value = "";
+    }
+  }
+
+  function renderAll(){
+    renderShelves();
+    renderCart();
+    renderTray();
+    renderWallet();
+    updateWalletModeUI();
+  }
+
+  function checkPayment(){
+    const goal = cartTotal();
+    const paid = sumTray();
+
+    if(goal===0){
+      showCashMessage("🛒 Warenkorb ist leer. Tippe links Produkte an 🙂", "warn");
+      return;
+    }
+
+    const mustExact = exactRequired(state.grade);
+    if(mustExact){
+      if(paid === goal){
+        showCashMessage(`🎉 Super! Genau passend bezahlt: <strong>${euro(paid)}</strong>.`, "ok");
+      } else if(paid < goal){
+        showCashMessage(`Noch nicht genug. Es fehlt <strong>${euro(goal - paid)}</strong>.`, "warn");
+      } else {
+        showCashMessage(`Zu viel! Du hast <strong>${euro(paid - goal)}</strong> zu viel gegeben.<br>Bitte passend bezahlen.`, "bad");
+      }
+      return;
+    }
+
+    const change = Math.max(0, paid - goal);
+    if(paid < goal){
+      showCashMessage(`Es fehlt noch <strong>${euro(goal - paid)}</strong>.`, "warn");
+      return;
+    }
+
+    const guessCents = parseEuroToCents(changeGuess.value);
+    if(guessCents === null){
+      showCashMessage(
+        `✅ Bezahlt! Rückgeld ist <strong>${euro(change)}</strong>.<br>` +
+        `Trage unten beim Portemonnaie dein <strong>Rückgeld</strong> ein und drücke nochmal <strong>Prüfen</strong>.`,
+        "warn"
+      );
+      return;
+    }
+
+    if(guessCents === change){
+      showCashMessage(`🎉 Richtig! Rückgeld: <strong>${euro(change)}</strong>.`, "ok");
+    } else {
+      showCashMessage(
+        `❌ Noch nicht richtig.<br>` +
+        `Dein Rückgeld: <strong>${euro(guessCents)}</strong><br>` +
+        `Richtig wäre: <strong>${euro(change)}</strong>.`,
+        "bad"
+      );
+    }
+  }
+
+  function giveHint(){
+    const goal = cartTotal();
+    const paid = sumTray();
+
+    if(goal===0){
+      toggleCashMessage("💡 Tipp: Erst links Produkte auswählen 🙂", "warn");
+      return;
+    }
+
+    const miss = goal - paid;
+    if(miss <= 0){
+      toggleCashMessage("💡 Tipp: Du hast schon genug Geld in der Ablage 🙂", "ok");
+      return;
+    }
+
+    const avail = state.wallet.map(m=>m.value).sort((a,b)=>b-a);
+
+    let remaining = miss;
+    const picks = [];
+    for(const v of avail){
+      if(picks.length >= 2) break;
+      if(v <= remaining){
+        picks.push(v);
+        remaining -= v;
+        if(remaining === 0) break;
+      }
+    }
+    if(picks.length === 0 && avail.length){
+      picks.push(avail[avail.length - 1]);
+    }
+
+    const shown = picks.map(labelMoney).join(" + ");
+    toggleCashMessage(`💡 Tipp: Probiere es mit <strong>${shown}</strong>.`, "warn");
+  }
+
+  function newRound(){
+    state.cart.clear();
+    state.showTraySum = false;
+    state.cashMsgOpen = false;
+    cashMsg.className = "cashMsg";
+    cashMsg.innerHTML = "";
+
+    buildWallet();
+  // Anpassung für 4. Klasse (leicht & mittel):
+  if(state.grade === 4 && state.level !== 3){
+    let small = state.wallet.filter(m => m.value <= 5);
+    if(small.length > 3){
+      let keep = small.slice(0,3);
+      let remove = small.slice(3);
+      let sumRemoved = remove.reduce((s,m)=>s+m.value,0);
+
+      state.wallet = state.wallet.filter(m => m.value > 5);
+      state.wallet.push(...keep);
+
+      while(sumRemoved >= 10){
+        state.wallet.push({
+          id:newId(),
+          value:10,
+          type:"coin",
+          x:randInt(12,280),
+          y:randInt(12,210),
+          rot:randInt(-18,18),
+          z:1
+        });
+        sumRemoved -= 10;
+      }
+    }
+  }
+
+    // Start-Layout je nach Stufe: sortiert nur wenn state.layout === "sort",
+    // sonst als "Haufen" (unsortiert) wie im Bild.
+    if(state.layout === "sort") applySortedStackLayout();
+    else applyScatterLayout();
+
+    renderAll();
+  }
+
+  gradeSel.addEventListener("change", ()=>{
+    state.grade = Number(gradeSel.value);
+    newRound();
+  });
+
+  levelSel.addEventListener("change", ()=>{
+    state.level = Number(levelSel.value);
+    newRound();
+  });
+
+  newRoundBtn.addEventListener("click", newRound);
+
+  resetPayBtn.addEventListener("click", ()=>{
+    clearPayment();
+    renderAll();
+  });
+
+  clearCartBtn.addEventListener("click", ()=>{
+    clearCart();
+    clearPayment();
+  });
+
+  checkBtn.addEventListener("click", checkPayment);
+  hintBtn.addEventListener("click", giveHint);
+
+  sortToggleBtn.addEventListener("click", ()=>{
+    applySortedStackLayout();
+    renderWallet();
+  });
+traySumToggle.addEventListener("click", ()=>{
+    state.showTraySum = !state.showTraySum;
+    renderTraySum();
+  });
+
+  window.addEventListener("resize", ()=>{
+    if(state.layout === "sort") applySortedStackLayout();
+    if(state.layout === "scatter") applyScatterLayout();
+    renderWallet();
+  });
+
+  (function init(){
+    state.grade = Number(gradeSel.value);
+    state.level = Number(levelSel.value);
+    newRound();
+  })();
+</script>
+</body>
+</html>
+
